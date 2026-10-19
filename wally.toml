@@ -1,0 +1,11 @@
+[package]
+name = "trustworthyq/guard-lib"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+license = "MIT"
+authors = ["tRUStworthyq"]
+description = "Middleware for Roblox-remotes: cache, rate limit, validation, access"
+exclude = ["dev", "dev.project.json", "**/*.spec.luau"]
+
+[dependencies]

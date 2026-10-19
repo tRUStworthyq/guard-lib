@@ -1,0 +1,28 @@
+{
+  "name": "guard-lib-dev",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "GuardLib": {
+        "$path": "default.project.json"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Dev": {
+        "$path": "dev/server"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Dev": {
+          "$path": "dev/client"
+        }
+      }
+    }
+  },
+  "servePort": 35200
+}

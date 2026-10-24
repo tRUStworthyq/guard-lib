@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Types = require(ReplicatedStorage.GuardLib.Server.Config.Types)
 local Resolve = require(ReplicatedStorage.GuardLib.Server.Config.Resolve)
 local Defaults = require(ReplicatedStorage.GuardLib.Server.Config.Defaults)
+local isFiniteNumber = require(ReplicatedStorage.GuardLib.Shared.Util.isFiniteNumber)
 
 local passed, failed = 0, 0
 
@@ -131,5 +132,12 @@ check(
 	"9. input table is not mutated",
 	input.adminOnly == nil and input.logLevel == nil and shallowEqual(input.rateLimit, { bucketCapacity = 5 })
 )
+
+check("finite: 1.5", isFiniteNumber(1.5))
+check("finite: NaN rejected", not isFiniteNumber(0 / 0))
+check("finite: inf rejected", not isFiniteNumber(math.huge))
+check("finite: -inf rejected", not isFiniteNumber(-math.huge))
+check("finite: string rejected", not isFiniteNumber("5"))
+check("finite: nil rejected", not isFiniteNumber(nil))
 
 print(`Done: {passed} passed, {failed} failed`)

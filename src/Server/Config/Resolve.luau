@@ -1,19 +1,16 @@
 --!strict
 local Types = require(script.Parent.Types)
 local deepFreeze = require(script.Parent.Parent.Parent.Shared.Util.deepFreeze)
-
-local function isInf(x): boolean
-	if type(x) == "number" then
-		return math.abs(x) == math.huge
-	else
-		return false
-	end
-end
+local isFiniteNumber = require(script.Parent.Parent.Parent.Shared.Util.isFiniteNumber)
 
 local function validateRateLimit(config: Types.RateLimitConfig, context: string)
-	-- Проверка на NaN
-	if config.bucketCapacity ~= config.bucketCapacity then
-		error(`GuardLib: invalid rateLimit in {context}: bucketCapacity must be a finite number, got nan`, 2)
+	if not isFiniteNumber(config.bucketCapacity) then
+		error(
+			`GuardLib: invalid rateLimit in {context}: bucketCapacity must be a finite number, got {tostring(
+				config.bucketCapacity
+			)}`,
+			2
+		)
 	end
 	if config.bucketCapacity < 1 then
 		error(
@@ -29,13 +26,14 @@ local function validateRateLimit(config: Types.RateLimitConfig, context: string)
 			2
 		)
 	end
-	if isInf(config.bucketCapacity) then
-		error(`GuardLib: invalid rateLimit in {context}: bucketCapacity must be a finite number, got inf`, 2)
-	end
 
-	-- Проверка на NaN
-	if config.refillPerSecond ~= config.refillPerSecond then
-		error(`GuardLib: invalid rateLimit in {context}: refillPerSecond must be a finite number, got nan`, 2)
+	if not isFiniteNumber(config.refillPerSecond) then
+		error(
+			`GuardLib: invalid rateLimit in {context}: refillPerSecond must be a finite number, got {tostring(
+				config.refillPerSecond
+			)}`,
+			2
+		)
 	end
 	if config.refillPerSecond <= 0 then
 		error(
@@ -44,9 +42,6 @@ local function validateRateLimit(config: Types.RateLimitConfig, context: string)
 			)}`,
 			2
 		)
-	end
-	if isInf(config.refillPerSecond) then
-		error(`GuardLib: invalid rateLimit in {context}: refillPerSecond must be a finite number, got inf`, 2)
 	end
 end
 

@@ -72,6 +72,7 @@ expectErrorWith(
 	"unknown option 'adminsOnly'. Did you mean 'adminOnly'?"
 )
 expectErrorWith("9. non-string key", parse({ true }), "unknown option '1'")
+expectErrorWith("9b. boolean key", parse({ [true] = 1 }), "unknown option 'true'")
 expectErrorWith(
 	"10. typo inside rateLimit",
 	parse({ rateLimit = { bucketCapcity = 5 } }),

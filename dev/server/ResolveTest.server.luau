@@ -118,7 +118,8 @@ check("7. empty endpoint: rateLimit from global", resolved.rateLimit == Defaults
 check("7. result is frozen", table.isfrozen(resolved :: any))
 
 -- resolveEndpoint: явные значения сохраняются
-local custom = Resolve.resolveEndpoint(Defaults, { adminOnly = true, logLevel = "debug", rateLimit = "disabled" }, "admin")
+local custom =
+	Resolve.resolveEndpoint(Defaults, { adminOnly = true, logLevel = "debug", rateLimit = "disabled" }, "admin")
 check("8. adminOnly = true kept", custom.adminOnly == true)
 check("8. logLevel override kept", custom.logLevel == "debug")
 check("8. rateLimit 'disabled' kept", custom.rateLimit == "disabled")

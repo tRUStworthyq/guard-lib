@@ -66,12 +66,16 @@ expectErrorWith("6. string instead of table", parse("hello"), "endpoint 'buyItem
 expectErrorWith("7. nil instead of table", parse(nil), "expected table, got nil")
 
 -- Неизвестные ключи
-expectErrorWith("8. typo in top-level key", parse({ adminsOnly = true }), "unknown option 'adminsOnly'")
+expectErrorWith(
+	"8. typo in top-level key",
+	parse({ adminsOnly = true }),
+	"unknown option 'adminsOnly'. Did you mean 'adminOnly'?"
+)
 expectErrorWith("9. non-string key", parse({ true }), "unknown option '1'")
 expectErrorWith(
 	"10. typo inside rateLimit",
 	parse({ rateLimit = { bucketCapcity = 5 } }),
-	"endpoint 'buyItem'.rateLimit: unknown option 'bucketCapcity'"
+	"endpoint 'buyItem'.rateLimit: unknown option 'bucketCapcity'. Did you mean 'bucketCapacity'?"
 )
 
 -- Неверные типы и значения

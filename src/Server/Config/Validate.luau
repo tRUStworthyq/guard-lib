@@ -1,6 +1,7 @@
 --!strict
 local deepFreeze = require(script.Parent.Parent.Parent.Shared.Util.deepFreeze)
 local Types = require(script.Parent.Types)
+local closestMatch = require(script.Parent.Parent.Parent.Shared.Util.closestMatch)
 
 local ENDPOINT_KEYS = { "adminOnly", "rateLimit", "logLevel" }
 local RATE_LIMIT_KEYS = { "bucketCapacity", "refillPerSecond", "onExceed" }
@@ -8,7 +9,12 @@ local RATE_LIMIT_KEYS = { "bucketCapacity", "refillPerSecond", "onExceed" }
 local function checkUnknownKeys(tbl: { [any]: unknown }, allowed: { string }, path: string, errors: { string })
 	for k in tbl do
 		if type(k) ~= "string" or table.find(allowed, k) == nil then
-			table.insert(errors, `{path}: unknown option '{tostring(k)}'`)
+			local candidate = closestMatch(k, allowed)
+			local err = `{path}: unknown option '{tostring(k)}'`
+			if candidate ~= nil then
+				err = err .. `. Did you mean '{candidate}'?`
+			end
+			table.insert(errors, err)
 		end
 	end
 end

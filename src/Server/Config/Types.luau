@@ -51,6 +51,14 @@ export type GlobalConfig = {
 	rejectExtraFields: boolean,
 }
 
+export type GlobalConfigInput = {
+	adminIds: { number }?,
+	logLevel: LogLevel?,
+	defaultRateLimit: RateLimitSettings | "disabled"?,
+	cacheRegions: { [string]: CacheRegionConfig }?,
+	rejectExtraFields: boolean?,
+}
+
 export type EndpointConfig = {
 	adminOnly: boolean?,
 	rateLimit: (RateLimitOverride | "disabled")?,

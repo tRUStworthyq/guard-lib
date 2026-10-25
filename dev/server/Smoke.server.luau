@@ -2,11 +2,13 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GuardLib = require(ReplicatedStorage.GuardLib)
-local Defaults = require(ReplicatedStorage.GuardLib.Server.Config.Defaults)
-
-local ok, err = pcall(function()
-	table.insert(Defaults.adminIds, 123)
-end)
-print(ok, err)
 
 print(`[server] GuardLib {GuardLib.version}`)
+
+local app = GuardLib.createApp({ adminIds = { 123 } })
+app:endpoint("buyItem"):rateLimit({ bucketCapacity = 2 }):build()
+local buyItem = app:getEndpoint("buyItem")
+print(
+	"[server] buyItem limit:",
+	if buyItem and buyItem.rateLimit ~= "disabled" then buyItem.rateLimit.bucketCapacity else "none"
+)

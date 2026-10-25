@@ -48,7 +48,7 @@ end
 local function resolveRateLimit(
 	global: Types.RateLimitSettings,
 	override: (Types.RateLimitOverride | "disabled")?,
-	endpointName: string
+	context: string
 ): Types.RateLimitSettings
 	if override == nil then
 		return global
@@ -74,7 +74,7 @@ local function resolveRateLimit(
 			end
 			local stringFields = table.concat(missing, ", ")
 			error(
-				`GuardLib: rateLimit for endpoint '{endpointName}' is partial, but the global rate limit is disabled. Missing: {stringFields}`,
+				`GuardLib: rateLimit in {context} is partial, but the base rate limit is disabled. Missing: {stringFields}`,
 				2
 			)
 		end
@@ -85,7 +85,7 @@ local function resolveRateLimit(
 			onExceed = exceed,
 		}
 
-		validateRateLimit(settings, `endpoint '{endpointName}'`)
+		validateRateLimit(settings, context)
 
 		return settings
 	end
@@ -96,7 +96,7 @@ local function resolveRateLimit(
 		onExceed = if override.onExceed ~= nil then override.onExceed else global.onExceed,
 	}
 
-	validateRateLimit(settings, `endpoint '{endpointName}'`)
+	validateRateLimit(settings, context)
 
 	return settings
 end
@@ -108,14 +108,39 @@ local function resolveEndpoint(
 ): Types.ResolvedEndpointConfig
 	local resolvedConfig: Types.ResolvedEndpointConfig = {
 		adminOnly = if endpoint.adminOnly ~= nil then endpoint.adminOnly else false,
-		rateLimit = resolveRateLimit(global.defaultRateLimit, endpoint.rateLimit, endpointName),
+		rateLimit = resolveRateLimit(global.defaultRateLimit, endpoint.rateLimit, `endpoint '{endpointName}'`),
 		logLevel = if endpoint.logLevel ~= nil then endpoint.logLevel else global.logLevel,
 	}
 	return deepFreeze(resolvedConfig)
+end
+
+local function resolveGlobal(defaults: Types.GlobalConfig, input: Types.GlobalConfigInput): Types.GlobalConfig
+	local adminIds = if input.adminIds ~= nil then table.clone(input.adminIds) else defaults.adminIds
+
+	local cacheRegions: { [string]: Types.CacheRegionConfig } = {}
+	if input.cacheRegions ~= nil then
+		for key, region in input.cacheRegions do
+			cacheRegions[key] = table.clone(region)
+		end
+	else
+		cacheRegions = defaults.cacheRegions
+	end
+
+	local globalConfig: Types.GlobalConfig = {
+		adminIds = adminIds,
+		logLevel = if input.logLevel ~= nil then input.logLevel else defaults.logLevel,
+		defaultRateLimit = resolveRateLimit(defaults.defaultRateLimit, input.defaultRateLimit, "global config"),
+		rejectExtraFields = if input.rejectExtraFields ~= nil
+			then input.rejectExtraFields
+			else defaults.rejectExtraFields,
+		cacheRegions = cacheRegions,
+	}
+	return deepFreeze(globalConfig)
 end
 
 return deepFreeze({
 	resolveRateLimit = resolveRateLimit,
 	validateRateLimit = validateRateLimit,
 	resolveEndpoint = resolveEndpoint,
+	resolveGlobal = resolveGlobal,
 })

@@ -29,6 +29,25 @@ local function expectError(name: string, fn: () -> ())
 	end
 end
 
+local function expectErrorWith(name: string, fn: () -> (), ...: string)
+	local ok, err = pcall(fn :: any)
+	if ok then
+		failed += 1
+		warn("FAIL", name, "— expected an error, got none")
+		return
+	end
+	local message = tostring(err)
+	for _, part in { ... } do
+		if not string.find(message, part, 1, true) then
+			failed += 1
+			warn("FAIL", name, `— message does not contain [{part}]:\n{message}`)
+			return
+		end
+	end
+	passed += 1
+	print("PASS", name)
+end
+
 -- Сравнение таблиц по содержимому, аналог equals(). Вложенные таблицы сравниваются по ссылке.
 local function shallowEqual(a: any, b: any): boolean
 	if type(a) ~= "table" or type(b) ~= "table" then
@@ -139,5 +158,67 @@ check("finite: inf rejected", not isFiniteNumber(math.huge))
 check("finite: -inf rejected", not isFiniteNumber(-math.huge))
 check("finite: string rejected", not isFiniteNumber("5"))
 check("finite: nil rejected", not isFiniteNumber(nil))
+
+local fromEmpty = Resolve.resolveGlobal(Defaults, {})
+check("G1. empty input: adminIds from defaults", fromEmpty.adminIds == Defaults.adminIds)
+check("G1. empty input: logLevel from defaults", fromEmpty.logLevel == Defaults.logLevel)
+check("G1. empty input: rateLimit from defaults", fromEmpty.defaultRateLimit == Defaults.defaultRateLimit)
+check("G1. empty input: rejectExtraFields from defaults", fromEmpty.rejectExtraFields == Defaults.rejectExtraFields)
+check("G1. empty input: cacheRegions from defaults", fromEmpty.cacheRegions == Defaults.cacheRegions)
+check("G1. result is frozen", table.isfrozen(fromEmpty :: any))
+
+-- Ловушка с or: явный false должен сохраниться
+check(
+	"G2. rejectExtraFields = false is kept",
+	Resolve.resolveGlobal(Defaults, { rejectExtraFields = false }).rejectExtraFields == false
+)
+check("G3. logLevel override", Resolve.resolveGlobal(Defaults, { logLevel = "debug" }).logLevel == "debug")
+
+-- adminIds: копия, таблица пользователя не заморожена
+local myIds = { 111, 222 }
+local withIds = Resolve.resolveGlobal(Defaults, { adminIds = myIds })
+check("G4. adminIds content copied", shallowEqual(withIds.adminIds, { 111, 222 }))
+check("G4. adminIds is a copy, not the same table", withIds.adminIds ~= myIds)
+check("G4. user's adminIds table is not frozen", not table.isfrozen(myIds))
+check("G4. result adminIds is frozen", table.isfrozen(withIds.adminIds :: any))
+
+-- cacheRegions: копия на всю глубину
+local myRegion: Types.CacheRegionConfig = { scope = "player", ttlSeconds = 30, maxCountOfRecords = 100 }
+local myRegions = { inventory = myRegion }
+local withRegions = Resolve.resolveGlobal(Defaults, { cacheRegions = myRegions })
+local copiedRegion = withRegions.cacheRegions.inventory
+check("G5. region content copied", shallowEqual(copiedRegion, myRegion))
+check("G5. region is a copy", copiedRegion ~= myRegion)
+check("G5. user's regions table is not frozen", not table.isfrozen(myRegions))
+check("G5. user's region table is not frozen", not table.isfrozen(myRegion))
+check("G5. result region is frozen", table.isfrozen(copiedRegion :: any))
+
+-- defaultRateLimit: слияние с дефолтом
+check(
+	"G6. partial defaultRateLimit merged with defaults",
+	shallowEqual(
+		Resolve.resolveGlobal(Defaults, { defaultRateLimit = { bucketCapacity = 5 } }).defaultRateLimit,
+		{ bucketCapacity = 5, refillPerSecond = 15, onExceed = "reject" }
+	)
+)
+check(
+	"G7. defaultRateLimit can be disabled",
+	Resolve.resolveGlobal(Defaults, { defaultRateLimit = "disabled" }).defaultRateLimit == "disabled"
+)
+
+-- Ошибки с контекстом "global config"
+local defaultsWithoutLimit: Types.GlobalConfig = {
+	adminIds = {},
+	logLevel = "info",
+	defaultRateLimit = "disabled",
+	cacheRegions = {},
+	rejectExtraFields = true,
+}
+expectErrorWith("G8. partial limit over disabled base", function()
+	Resolve.resolveGlobal(defaultsWithoutLimit, { defaultRateLimit = { bucketCapacity = 5 } })
+end, "rateLimit in global config is partial", "Missing: refillPerSecond, onExceed")
+expectErrorWith("G9. invalid number in defaultRateLimit", function()
+	Resolve.resolveGlobal(Defaults, { defaultRateLimit = { bucketCapacity = 0 } })
+end, "invalid rateLimit in global config", "bucketCapacity must be >= 1")
 
 print(`Done: {passed} passed, {failed} failed`)

@@ -148,7 +148,12 @@ expectErrorWith(
 	parseGlobal({ adminIDs = {} }),
 	"unknown option 'adminIDs'. Did you mean 'adminIds'?"
 )
-expectErrorWith("G6. logLevel not in enum", parseGlobal({ logLevel = "verbose" }), "global config.logLevel:", '"verbose"')
+expectErrorWith(
+	"G6. logLevel not in enum",
+	parseGlobal({ logLevel = "verbose" }),
+	"global config.logLevel:",
+	'"verbose"'
+)
 expectErrorWith(
 	"G7. typo inside defaultRateLimit",
 	parseGlobal({ defaultRateLimit = { bucketCapcity = 1 } }),
@@ -162,14 +167,22 @@ expectErrorWith(
 
 -- adminIds
 expectErrorWith("G9. adminIds not table", parseGlobal({ adminIds = 123 }), ".adminIds: expected table, got number")
-expectErrorWith("G10. adminIds is a dictionary", parseGlobal({ adminIds = { admin = 123 } }), ".adminIds: expected array")
+expectErrorWith(
+	"G10. adminIds is a dictionary",
+	parseGlobal({ adminIds = { admin = 123 } }),
+	".adminIds: expected array"
+)
 expectErrorWith("G11. adminIds contains 0", parseGlobal({ adminIds = { 0 } }), ".adminIds.1:", "got 0")
 expectErrorWith("G12. adminIds contains 1.5", parseGlobal({ adminIds = { 1.5 } }), ".adminIds.1:", "got 1.5")
 expectErrorWith("G13. adminIds contains string", parseGlobal({ adminIds = { "123" } }), ".adminIds.1:", "got 123")
 expectErrorWith("G14. adminIds contains NaN", parseGlobal({ adminIds = { 0 / 0 } }), ".adminIds.1:", "got nan")
 
 -- cacheRegions: контейнер
-expectErrorWith("G15. cacheRegions not table", parseGlobal({ cacheRegions = 5 }), ".cacheRegions: expected table, got number")
+expectErrorWith(
+	"G15. cacheRegions not table",
+	parseGlobal({ cacheRegions = 5 }),
+	".cacheRegions: expected table, got number"
+)
 expectErrorWith(
 	"G16. empty region name",
 	parseGlobal({ cacheRegions = { [""] = { scope = "global", ttlSeconds = 1, maxCountOfRecords = 1 } } }),

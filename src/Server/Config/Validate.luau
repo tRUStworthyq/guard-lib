@@ -26,11 +26,18 @@ local function isOneOf(value: string, enum: { [string]: string }): boolean
 	return enum[value] ~= nil
 end
 
-local function checkEnum(value: unknown, enum: { [string]: string }, expected: string, path: string, errors: { string }, required: boolean?)
+local function checkEnum(
+	value: unknown,
+	enum: { [string]: string },
+	expected: string,
+	path: string,
+	errors: { string },
+	required: boolean?
+)
 	if value == nil then
-        if required then
-            table.insert(errors, `{path}: required field, got nil`)
-        end
+		if required then
+			table.insert(errors, `{path}: required field, got nil`)
+		end
 	elseif type(value) ~= "string" then
 		table.insert(errors, `{path}: expected string, got {typeof(value)}`)
 	elseif not isOneOf(value, enum) then
@@ -70,23 +77,27 @@ local function checkRateLimitOverride(value: unknown, path: string, errors: { st
 end
 
 local function checkCacheRegion(value: { [any]: unknown }, path: string, errors: { string })
-    checkUnknownKeys(value, REGION_KEYS, path, errors)
+	checkUnknownKeys(value, REGION_KEYS, path, errors)
 
-    checkEnum(value.scope, Types.CacheScope :: any, '"global" | "player"', `{path}.scope`, errors, true)
-                
-    local ttlSeconds = value.ttlSeconds
-    if ttlSeconds == nil then
-        table.insert(errors, `{path}.ttlSeconds: required field, got nil`)
-    elseif not isFiniteNumber(ttlSeconds) or (ttlSeconds :: number) <= 0 then 
-        table.insert(errors, `{path}.ttlSeconds: expected finite number > 0, got {ttlSeconds}`)
-    end
+	checkEnum(value.scope, Types.CacheScope :: any, '"global" | "player"', `{path}.scope`, errors, true)
 
-    local maxCountOfRecords = value.maxCountOfRecords
-    if maxCountOfRecords == nil then
-        table.insert(errors, `{path}.maxCountOfRecords: required field, got nil`)
-    elseif not isFiniteNumber(maxCountOfRecords) or math.floor((maxCountOfRecords :: number)) ~= maxCountOfRecords or (maxCountOfRecords :: number) < 1 then
-        table.insert(errors, `{path}.maxCountOfRecords: expected finite integer >= 1, got {maxCountOfRecords}`)
-    end
+	local ttlSeconds = value.ttlSeconds
+	if ttlSeconds == nil then
+		table.insert(errors, `{path}.ttlSeconds: required field, got nil`)
+	elseif not isFiniteNumber(ttlSeconds) or (ttlSeconds :: number) <= 0 then
+		table.insert(errors, `{path}.ttlSeconds: expected finite number > 0, got {ttlSeconds}`)
+	end
+
+	local maxCountOfRecords = value.maxCountOfRecords
+	if maxCountOfRecords == nil then
+		table.insert(errors, `{path}.maxCountOfRecords: required field, got nil`)
+	elseif
+		not isFiniteNumber(maxCountOfRecords)
+		or math.floor(maxCountOfRecords :: number) ~= maxCountOfRecords
+		or (maxCountOfRecords :: number) < 1
+	then
+		table.insert(errors, `{path}.maxCountOfRecords: expected finite integer >= 1, got {maxCountOfRecords}`)
+	end
 end
 
 local function parseEndpointConfig(input: unknown, endpointName: string): Types.EndpointConfig
@@ -118,7 +129,7 @@ local function parseEndpointConfig(input: unknown, endpointName: string): Types.
 end
 
 local function parseGlobalConfigInput(input: unknown): Types.GlobalConfigInput
-    local path = `global config`
+	local path = `global config`
 
 	if type(input) ~= "table" then
 		error(`GuardLib: {path}: expected table, got {typeof(input)}`, 2)
@@ -127,60 +138,60 @@ local function parseGlobalConfigInput(input: unknown): Types.GlobalConfigInput
 	local tbl = input :: { [any]: unknown }
 	local errors: { string } = {}
 
-    checkUnknownKeys(tbl, GLOBAL_KEYS, path, errors)
+	checkUnknownKeys(tbl, GLOBAL_KEYS, path, errors)
 
-    checkEnum(tbl.logLevel, Types.LogLevel :: any, '"debug" | "info" | "warn" | "error"', `{path}.logLevel`, errors)
+	checkEnum(tbl.logLevel, Types.LogLevel :: any, '"debug" | "info" | "warn" | "error"', `{path}.logLevel`, errors)
 
-    checkRateLimitOverride(tbl.defaultRateLimit, `{path}.defaultRateLimit`, errors)
+	checkRateLimitOverride(tbl.defaultRateLimit, `{path}.defaultRateLimit`, errors)
 
-    local rejectExtraFields = tbl.rejectExtraFields
+	local rejectExtraFields = tbl.rejectExtraFields
 	if rejectExtraFields ~= nil and type(rejectExtraFields) ~= "boolean" then
 		table.insert(errors, `{path}.rejectExtraFields: expected boolean, got {typeof(rejectExtraFields)}`)
 	end
 
-    local adminIds = tbl.adminIds
-    if adminIds == nil then
-	    -- не задан — нормально
-    elseif type(adminIds) ~= "table" then
-        table.insert(errors, `{path}.adminIds: expected table, got {typeof(adminIds)}`)
-    else
-        local ids = adminIds :: { [any]: unknown }
-        for key, id in ids do
-            if type(key) ~= "number" or math.floor(key) ~= key or key < 1 then
-                table.insert(errors, `{path}.adminIds: expected array, got key {tostring(key)}`)
-            elseif not isFiniteNumber(id) or math.floor(id :: number) ~= id or id == 0 then
-                table.insert(errors, `{path}.adminIds.{key}: expected non-zero integer UserId, got {tostring(id)}`)
-            end
-        end
-    end
+	local adminIds = tbl.adminIds
+	if adminIds == nil then
+	-- не задан — нормально
+	elseif type(adminIds) ~= "table" then
+		table.insert(errors, `{path}.adminIds: expected table, got {typeof(adminIds)}`)
+	else
+		local ids = adminIds :: { [any]: unknown }
+		for key, id in ids do
+			if type(key) ~= "number" or math.floor(key) ~= key or key < 1 then
+				table.insert(errors, `{path}.adminIds: expected array, got key {tostring(key)}`)
+			elseif not isFiniteNumber(id) or math.floor(id :: number) ~= id or id == 0 then
+				table.insert(errors, `{path}.adminIds.{key}: expected non-zero integer UserId, got {tostring(id)}`)
+			end
+		end
+	end
 
-    local cacheRegions = tbl.cacheRegions
-    if cacheRegions == nil then
-        -- не задан — нормально
-    elseif type(cacheRegions) ~= "table" then
-        table.insert(errors, `{path}.cacheRegions: expected table, got {typeof(cacheRegions)}`)
-    else
-        local regions = cacheRegions :: { [any]: unknown }
-        for key, region in regions do 
-            if type(key) ~= "string" or key == "" then
-                table.insert(errors, `{path}.cacheRegions: expected string non-empty key, got key {tostring(key)}`)
-            elseif type(region) ~= "table" then
-                table.insert(errors, `{path}.cacheRegions.{key}: expected table, got {typeof(region)}`)
-            else
-                local currRegion = region :: { [any]: unknown }
-                checkCacheRegion(currRegion, `{path}.cacheRegions.{key}`, errors)
-            end
-        end
-    end
+	local cacheRegions = tbl.cacheRegions
+	if cacheRegions == nil then
+		-- не задан — нормально
+	elseif type(cacheRegions) ~= "table" then
+		table.insert(errors, `{path}.cacheRegions: expected table, got {typeof(cacheRegions)}`)
+	else
+		local regions = cacheRegions :: { [any]: unknown }
+		for key, region in regions do
+			if type(key) ~= "string" or key == "" then
+				table.insert(errors, `{path}.cacheRegions: expected string non-empty key, got key {tostring(key)}`)
+			elseif type(region) ~= "table" then
+				table.insert(errors, `{path}.cacheRegions.{key}: expected table, got {typeof(region)}`)
+			else
+				local currRegion = region :: { [any]: unknown }
+				checkCacheRegion(currRegion, `{path}.cacheRegions.{key}`, errors)
+			end
+		end
+	end
 
-    if #errors > 0 then
+	if #errors > 0 then
 		error(`GuardLib: invalid config:\n{table.concat(errors, "\n")}`, 2)
 	end
 
-    return (tbl :: any) :: Types.GlobalConfigInput
+	return (tbl :: any) :: Types.GlobalConfigInput
 end
 
 return deepFreeze({
 	parseEndpointConfig = parseEndpointConfig,
-    parseGlobalConfigInput = parseGlobalConfigInput,
+	parseGlobalConfigInput = parseGlobalConfigInput,
 })

@@ -54,7 +54,7 @@ export type GlobalConfig = {
 export type GlobalConfigInput = {
 	adminIds: { number }?,
 	logLevel: LogLevel?,
-	defaultRateLimit: RateLimitSettings | "disabled"?,
+	defaultRateLimit: (RateLimitOverride | "disabled")?,
 	cacheRegions: { [string]: CacheRegionConfig }?,
 	rejectExtraFields: boolean?,
 }

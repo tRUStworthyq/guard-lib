@@ -12,6 +12,7 @@ export type ResolvedEndpointConfig = Types.ResolvedEndpointConfig
 export type LogLevel = Types.LogLevel
 export type OnExceed = Types.OnExceed
 export type RateLimitOverride = Types.RateLimitOverride
+export type EndpointDefinition = EndpointBuilder.Definition
 
 export type GuardLib = {
 	version: string,
